@@ -10,7 +10,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::MainWindow)
 {
-    this->setFixedSize(1200, 500);
+    this->setFixedSize(700, 500);
     button = new QPushButton("kek");
     Alphabet = new QLineEdit;
     Alphabet->setFixedSize(200, 50); Alphabet->setPlaceholderText("Стартовый алфавит");

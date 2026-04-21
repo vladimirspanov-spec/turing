@@ -20,6 +20,9 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+private slots:
+    void onButtonClicked();
+
 private:
     Ui::MainWindow *ui;
     QPushButton *button;

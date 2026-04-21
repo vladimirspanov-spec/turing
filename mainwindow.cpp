@@ -2,6 +2,9 @@
 #include "ui_mainwindow.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
+#include <string>
+#include "turing.h"
+#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent)
     : QWidget(parent)
@@ -22,8 +25,19 @@ MainWindow::MainWindow(QWidget *parent)
     QVBoxLayout *main_layout = new QVBoxLayout;
     main_layout->addLayout(line_layout); main_layout->addLayout(button_layout);
     setLayout(main_layout);
+    connect(button, &QPushButton::clicked, this, &MainWindow::onButtonClicked);
 
     //ui->setupUi(this);
+}
+
+void MainWindow::onButtonClicked() {
+    qDebug() << "kek";
+    std::string alphabet = Alphabet->text().toStdString();
+    std::string extra_symbol = ExtraSymbols->text().toStdString();
+    turing* t = new turing(alphabet, extra_symbol);
+    this->hide();
+    t->show();
+
 }
 
 MainWindow::~MainWindow()

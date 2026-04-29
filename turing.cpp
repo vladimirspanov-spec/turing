@@ -6,8 +6,6 @@
 #include <QString>
 #include <map>
 #include <sstream>
-#include <thread>
-#include <chrono>
 
 QVBoxLayout *table_layout = new QVBoxLayout;
 std::map<int, char> symbols;
@@ -16,7 +14,9 @@ std::map<char, int> rsymbols;
 turing::turing(std::string alphabet, std::string extrasymbols) {
     this->setFixedSize(700, 500);
     header = new int;
+    vector_header = new int;
     *header = -1;
+    *vector_header = -1;
 
     timer = new QTimer(this);
     timer->setInterval(1000);
@@ -38,6 +38,10 @@ turing::turing(std::string alphabet, std::string extrasymbols) {
     QVBoxLayout *main_layout = new QVBoxLayout;
     main_layout->addLayout(str_layout);
     ribbon = new QLineEdit[17];
+    ribbon_values = new QVector<QString*>;
+    for (int i = 0; i < 512; ++i) {
+        ribbon_values->push_back(new QString("^"));
+    } //128 - 0
     QHBoxLayout *ribbon_layout = new QHBoxLayout;
     for (int i = 0; i < 17; ++i) {
         ribbon[i].setReadOnly(true);
@@ -137,16 +141,27 @@ void turing::setNewStr() {
         ribbon[i].setText("^");
         ribbon[i].setStyleSheet("");
     }
+    for (int i = 0; i < 512; ++i) {
+        *(ribbon_values->at(i)) = "^";
+    } //128 - 0
     std::string s = str->text().toStdString();
-    int x = (17-s.size())/2;
+    int x = 8;
     int j = 0;
-    for (unsigned long i = x; i < x +s.size(); ++i) {
+    for (unsigned long i = x; i < x + s.size() && i < 17; ++i) {
         ribbon[i].setText(QString(str->text().at(j)));
         ++j;
         //qDebug() << "lol";
     }
-    *header = (17-s.size())/2;
-    ribbon[(17-s.size())/2].setStyleSheet("QLineEdit { border: 2px solid #00EEAA }");
+    j = 0;
+    for (unsigned long i = 128 + x; i < 128 + x + s.size(); ++i) {
+        *(ribbon_values->at(i)) = QString(str->text().at(j));
+        ++j;
+        //qDebug() << "lol";
+    }
+    qDebug() << j;
+    *header = 8;
+    *vector_header = 8 + 128;
+    ribbon[8].setStyleSheet("QLineEdit { border: 2px solid #00EEAA }");
     *stopped = 0;
 }
 
@@ -215,7 +230,7 @@ void turing::step() {
     std::stringstream ss(s);
     std::string s1;
     ss >> s1;
-    if (s1.size() == 1 && s1 != "<" && s1 != ">") {
+    if (s1.size() == 1 && s1 != "<" && s1 != ">" && s1 != "!") {
         new_sym = s1;
         ss >> s1;
     }
@@ -229,16 +244,41 @@ void turing::step() {
 
     if (new_sym != "") {
         ribbon[*header].setText(QString::fromStdString(new_sym));
+        *(ribbon_values->at(*vector_header)) = QString::fromStdString(new_sym);
     }
 
 
     if (dir == ">") {
         ribbon[*header].setStyleSheet("");
         *header += 1;
+        *vector_header += 1;
+        if (*header >= 17) {
+            for (int i = 0; i < 13; ++i) {
+                ribbon[i].setText(ribbon[i+4].text());
+            }
+            *header -= 4;
+            int j = 0;
+            for (int i = 13; i < 17; ++i) {
+                ribbon[i].setText(*(ribbon_values->at(*vector_header + j)));
+                ++j;
+            }
+        }
         ribbon[*header].setStyleSheet("QLineEdit { border: 2px solid #00EEAA }");
     } else if(dir =="<") {
         ribbon[*header].setStyleSheet("");
         *header -= 1;
+        *vector_header -= 1;
+        if (*header < 0) {
+            for (int i = 16; i > 3; --i) {
+                ribbon[i].setText(ribbon[i-4].text());
+            }
+            *header += 4;
+            int j = 0;
+            for (int i = 3; i >= 0; --i) {
+                ribbon[i].setText(*(ribbon_values->at(*vector_header - j)));
+                ++j;
+            }
+        }
         ribbon[*header].setStyleSheet("QLineEdit { border: 2px solid #00EEAA }");
     }
 

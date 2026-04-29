@@ -18,6 +18,7 @@ public:
         delete al_size;
         delete q_header;
         delete stopped;
+        delete vector_header;
     }
 private slots:
     void setNewStr();
@@ -30,8 +31,10 @@ private:
     QLineEdit *Alphabet;
     QLineEdit *ExtraSymbols;
     QLineEdit *ribbon;
+    QVector<QString*> *ribbon_values;
     QLineEdit *str;
     int *header;
+    int *vector_header;
     int *q_header;
     int *al_size;
     int *stopped;

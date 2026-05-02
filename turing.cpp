@@ -18,7 +18,7 @@ turing::turing(std::string alphabet, std::string extrasymbols) {
     *header = -1;
     *vector_header = -1;
 
-    timer = new QTimer(this);
+    timer = new QTimer(this); //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
     timer->setInterval(1000);
     connect(timer, &QTimer::timeout, this, &turing::step);
     /*this->Alphabet = new QLineEdit(alphabet.c_str());
@@ -131,6 +131,16 @@ turing::turing(std::string alphabet, std::string extrasymbols) {
     connect(stop_button, &QPushButton::clicked, this, &turing::stop);
     stopped = new int;
     *stopped = 0;
+
+    time = new int;
+    *time = 1000;
+    QPushButton *removeSpeed = new QPushButton("Понизить скорость");
+    QPushButton *addSpeed = new QPushButton("Повысить скорость");
+    QHBoxLayout *speed = new QHBoxLayout;
+    speed->addWidget(removeSpeed); speed->addWidget(addSpeed);
+    connect(removeSpeed, &QPushButton::clicked, this, &turing::decreaseSpeed);
+    connect(addSpeed, &QPushButton::clicked, this, &turing::increaseSpeed);
+    main_layout->addLayout(speed);
 
     setLayout(main_layout);
     connect(set_str, &QPushButton::clicked, this, &turing::setNewStr);
@@ -317,5 +327,33 @@ void turing::stop() {
     if (timer->isActive()) {
         timer->stop();
         qDebug() << "Машина остановлена пользователем";
+    }
+}
+
+void turing::increaseSpeed() {
+    if (*time > 100) {
+        *time -= 100;
+        timer->setInterval(*time);
+        qDebug() << "Скорость увеличена. Интервал:" << *time << "мс";
+    } else if (*time > 50) {
+        *time = 50;
+        timer->setInterval(*time);
+        qDebug() << "Максимальная скорость. Интервал:" << *time << "мс";
+    } else {
+        qDebug() << "Уже максимальная скорость";
+    }
+}
+
+void turing::decreaseSpeed() {
+    if (*time < 1000) {
+        *time += 100;
+        timer->setInterval(*time);
+        qDebug() << "Скорость уменьшена. Интервал:" << *time << "мс";
+    } else if (*time < 2000) {
+        *time = 2000;
+        timer->setInterval(*time);
+        qDebug() << "Минимальная скорость. Интервал:" << *time << "мс";
+    } else {
+        qDebug() << "Уже минимальная скорость";
     }
 }

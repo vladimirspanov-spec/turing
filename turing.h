@@ -19,6 +19,7 @@ public:
         delete q_header;
         delete stopped;
         delete vector_header;
+        delete time;
     }
 private slots:
     void setNewStr();
@@ -27,6 +28,8 @@ private slots:
     void step();
     void play();
     void stop();
+    void increaseSpeed();
+    void decreaseSpeed();
 private:
     QLineEdit *Alphabet;
     QLineEdit *ExtraSymbols;
@@ -38,6 +41,7 @@ private:
     int *q_header;
     int *al_size;
     int *stopped;
+    int *time;
     QVector<QLineEdit*> *table;
     QVector<QHBoxLayout*> *lines;
     QLineEdit *table_title;

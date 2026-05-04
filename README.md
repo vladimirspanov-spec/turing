@@ -1,51 +1,54 @@
-# First Level Heading
+# 🖥️ Turing Machine Emulator
 
-Paragraph.
+Эмулятор машины Тьюринга с графическим интерфейсом на Qt/C++.
 
-## Second Level Heading
+## ✨ Возможности
 
-Paragraph.
+- Визуальное создание программы в табличном виде
+- Добавление/удаление состояний
+- Отображение ленты с прокруткой
+- Регулировка скорости выполнения
+- Пошаговое и автоматическое выполнение
+- Подсветка текущего состояния и позиции головки
 
-- bullet
-+ other bullet
-* another bullet
-    * child bullet
+## 🚀 Использование
 
-1. ordered
-2. next ordered
+### Настройка алфавита
+- **Стартовый алфавит** - основные символы (например: `01`)
+- **Дополнительные символы** - расширение алфавита (например: `AB`)
 
-### Third Level Heading
+### Формат команды
+`[символ] [<|>] [qN|!]`
 
-Some *italic* and **bold** text and `inline code`.
+- `символ` - запись в ячейку (опционально)
+- `<` - сдвиг влево, `>` - сдвиг вправо
+- `qN` - переход в состояние qN
+- `!` - остановка
 
-An empty line starts a new paragraph.
+### Примеры команд
+| Команда | Значение |
+|---------|----------|
+| `1 > q1` | Записать '1', вправо, в q1 |
+| `< q2` | Влево, в q2 |
+| `!` | Остановка |
 
-Use two spaces at the end  
-to force a line break.
+### Управление
+| Кнопка | Действие |
+|--------|----------|
+| Задать строку | Установить содержимое ленты |
+| Шаг | Выполнить одну инструкцию |
+| Запустить | Автоматическое выполнение |
+| Стоп | Остановка |
+| + / - | Добавить/удалить состояние |
+| Повысить/Понизить скорость | Изменить скорость |
 
-A horizontal ruler follows:
+### Визуальные индикаторы
+- 🔵 **Синяя рамка** - текущее состояние
+- 🟢 **Зеленая рамка** - позиция головки
 
----
+## 🛠️ Сборка
 
-Add links inline like [this link to the Qt homepage](https://www.qt.io),
-or with a reference like [this other link to the Qt homepage][1].
-
-    Add code blocks with
-    four spaces at the front.
-
-> A blockquote
-> starts with >
->
-> and has the same paragraph rules as normal text.
-
-First Level Heading in Alternate Style
-======================================
-
-Paragraph.
-
-Second Level Heading in Alternate Style
----------------------------------------
-
-Paragraph.
-
-[1]: https://www.qt.io
+```bash
+qmake
+make
+./turing_machine

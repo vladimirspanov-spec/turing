@@ -7,6 +7,7 @@
 #include <QVBoxLayout>
 #include <QVector>
 #include <QTimer>
+#include <QPushButton>
 
 class turing : public QWidget
 {
@@ -15,11 +16,16 @@ public:
     turing(std::string alphabet, std::string extrasymbols);
     ~turing() {
         delete header;
-        delete al_size;
-        delete q_header;
-        delete stopped;
         delete vector_header;
+        delete q_header;
+        delete al_size;
+        delete stopped;
         delete time;
+        delete[] ribbon;
+        delete ribbon_values;
+        delete table;
+        delete lines;
+        delete[] table_title;
     }
 private slots:
     void setNewStr();
@@ -30,11 +36,12 @@ private slots:
     void stop();
     void increaseSpeed();
     void decreaseSpeed();
+    void change_alphabet();
 private:
+    void freezeTable(bool freeze);
     QLineEdit *Alphabet;
     QLineEdit *ExtraSymbols;
     QLineEdit *ribbon;
-    QVector<QString*> *ribbon_values;
     QLineEdit *str;
     int *header;
     int *vector_header;
@@ -46,6 +53,13 @@ private:
     QVector<QHBoxLayout*> *lines;
     QLineEdit *table_title;
     QTimer *timer;
+    QVector<QString*> *ribbon_values;
+    QPushButton *plusq;
+    QPushButton *minusq;
+    QPushButton *set_str;
+    QPushButton *changeAlphabet;
+    QPushButton *removeSpeed;
+    QPushButton *addSpeed;
 
 };
 

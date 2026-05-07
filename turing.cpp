@@ -6,12 +6,21 @@
 #include <QString>
 #include <map>
 #include <sstream>
+#include "mainwindow.h"
 
-QVBoxLayout *table_layout = new QVBoxLayout;
+QVBoxLayout *table_layout = nullptr;
 std::map<int, char> symbols;
 std::map<char, int> rsymbols;
 
 turing::turing(std::string alphabet, std::string extrasymbols) {
+    if (table_layout) {
+        delete table_layout;
+        table_layout = nullptr;
+    }
+    symbols.clear();
+    rsymbols.clear();
+
+    table_layout = new QVBoxLayout;
     this->setFixedSize(700, 500);
     header = new int;
     vector_header = new int;
@@ -28,7 +37,7 @@ turing::turing(std::string alphabet, std::string extrasymbols) {
     QHBoxLayout *layout = new QHBoxLayout;
     layout->addWidget(Alphabet); layout->addWidget(ExtraSymbols);*/
     //setLayout(layout);
-    QPushButton* set_str = new QPushButton("Задать строку");
+    set_str = new QPushButton("Задать строку");
     set_str->setFixedSize(250, 50);
     str = new QLineEdit;
     str->setFixedSize(250, 50); str->setPlaceholderText("Введите строку");
@@ -107,7 +116,7 @@ turing::turing(std::string alphabet, std::string extrasymbols) {
     table_layout->addLayout(lines->at(0));
 
 
-    QPushButton *plusq, *minusq;
+    //QPushButton *plusq, *minusq;
     plusq = new QPushButton("+");
     minusq = new QPushButton("-");
     connect(plusq, &QPushButton::clicked, this, &turing::add_q);
@@ -134,19 +143,57 @@ turing::turing(std::string alphabet, std::string extrasymbols) {
 
     time = new int;
     *time = 1000;
-    QPushButton *removeSpeed = new QPushButton("Понизить скорость");
-    QPushButton *addSpeed = new QPushButton("Повысить скорость");
+    removeSpeed = new QPushButton("Понизить скорость");
+    addSpeed = new QPushButton("Повысить скорость");
     QHBoxLayout *speed = new QHBoxLayout;
     speed->addWidget(removeSpeed); speed->addWidget(addSpeed);
     connect(removeSpeed, &QPushButton::clicked, this, &turing::decreaseSpeed);
     connect(addSpeed, &QPushButton::clicked, this, &turing::increaseSpeed);
     main_layout->addLayout(speed);
+    changeAlphabet = new QPushButton("Изменить алфавит");
+    main_layout->addWidget(changeAlphabet);
+    connect(changeAlphabet, &QPushButton::clicked, this, &turing::change_alphabet);
 
     setLayout(main_layout);
     connect(set_str, &QPushButton::clicked, this, &turing::setNewStr);
 }
 
+void turing::freezeTable(bool freeze) {
+    // Замораживаем/размораживаем кнопки управления таблицей
+    plusq->setDisabled(freeze);
+    minusq->setDisabled(freeze);
+    set_str->setDisabled(freeze);
+    changeAlphabet->setDisabled(freeze);
+
+    // Замораживаем/размораживаем все ячейки таблицы (кроме заголовков и состояний)
+    for (int i = 0; i < table->size(); ++i) {
+        QLineEdit* cell = table->at(i);
+        // Проверяем, что это не ячейка с состоянием (они всегда ReadOnly)
+        if (!cell->text().startsWith('q')) {
+            cell->setReadOnly(freeze);
+        }
+    }
+
+    // Изменяем стиль при заморозке
+    /*if (freeze) {
+        for (int i = 0; i < table->size(); ++i) {
+            QLineEdit* cell = table->at(i);
+            if (!cell->text().startsWith('q')) {
+                cell->setStyleSheet("QLineEdit { background-color: #f0f0f0; }");
+            }
+        }
+    } else {
+        for (int i = 0; i < table->size(); ++i) {
+            QLineEdit* cell = table->at(i);
+            if (!cell->text().startsWith('q')) {
+                cell->setStyleSheet("");
+            }
+        }
+    }*/
+}
+
 void turing::setNewStr() {
+    freezeTable(false);
     for (int i = 0; i < 17; i++) {
         ribbon[i].setText("^");
         ribbon[i].setStyleSheet("");
@@ -170,6 +217,9 @@ void turing::setNewStr() {
     }
     qDebug() << j;
     *header = 8;
+    table->at(*q_header)->setStyleSheet("");
+    *q_header = 0;
+    table->at(0)->setStyleSheet("QLineEdit { border: 2px solid #0000AA }");
     *vector_header = 8 + 128;
     ribbon[8].setStyleSheet("QLineEdit { border: 2px solid #00EEAA }");
     *stopped = 0;
@@ -177,7 +227,7 @@ void turing::setNewStr() {
 
 void turing::add_q() {
     std::stringstream ss;
-    qDebug() << *al_size;
+    qDebug() << table->size();
     int index = lines->size();
     ss << 'q' << index;
     lines->append(new QHBoxLayout);
@@ -194,7 +244,6 @@ void turing::add_q() {
 
 void turing::delete_q() {
     if (lines->size() <= 1) {
-        qDebug() << "Нельзя удалить последнюю строку";
         return;
     }
 
@@ -227,19 +276,29 @@ void turing::delete_q() {
         *q_header = 0;
         table->at(0)->setStyleSheet("QLineEdit { border: 2px solid #0000AA }");
     }
-    qDebug() << *q_header << " " << table->size();
-    qDebug() << "Осталось строк:" << lines->size();
 }
 
 void turing::step() {
     if (*header == -1) { qDebug() << "no"; return; }
     if (*stopped) { qDebug() << "machine stopped"; return; }
+    static bool firstStep = true;
+    if (firstStep) {
+        freezeTable(true);
+        firstStep = false;
+    }
     char sym = *ribbon[*header].text().toLatin1();
     if (rsymbols[sym] == 0) { return; }
     std::string s = table->at(rsymbols[sym] + *q_header)->text().toStdString(), new_sym, dir, new_q;
     std::stringstream ss(s);
     std::string s1;
     ss >> s1;
+    if (s1 == "") {
+        *stopped = 1;
+        timer->stop();
+        freezeTable(false);
+        qDebug() << "Машина остановлена";
+        firstStep = true;
+    }
     if (s1.size() == 1 && s1 != "<" && s1 != ">" && s1 != "!") {
         new_sym = s1;
         ss >> s1;
@@ -295,6 +354,9 @@ void turing::step() {
     if (new_q == "!") {
         *stopped = 1;
         timer->stop();
+        freezeTable(false);
+        qDebug() << "Машина остановлена";
+        firstStep = true;
     }
     else if (new_q != "") {
         new_q.erase(0, 1);
@@ -319,14 +381,15 @@ void turing::play() {
     if (timer->isActive()) {
         timer->stop();
     }
-    timer->start(); // Запускаем таймер
-    qDebug() << "Запуск машины с интервалом 2 секунды";
+    freezeTable(true);
+    timer->start();
+    qDebug() << "Запуск машины";
 }
 
 void turing::stop() {
     if (timer->isActive()) {
         timer->stop();
-        qDebug() << "Машина остановлена пользователем";
+        qDebug() << "Машина остановлена";
     }
 }
 
@@ -340,7 +403,7 @@ void turing::increaseSpeed() {
         timer->setInterval(*time);
         qDebug() << "Максимальная скорость. Интервал:" << *time << "мс";
     } else {
-        qDebug() << "Уже максимальная скорость";
+        qDebug() << "макс";
     }
 }
 
@@ -356,4 +419,18 @@ void turing::decreaseSpeed() {
     } else {
         qDebug() << "Уже минимальная скорость";
     }
+}
+
+void turing::change_alphabet() {
+    // Останавливаем таймер
+    if (timer->isActive()) {
+        timer->stop();
+    }
+
+    // Закрываем текущее окно с удалением
+    this->close();
+
+    // Создаем новое главное окно
+    MainWindow *m = new MainWindow;
+    m->show();
 }

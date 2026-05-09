@@ -21,7 +21,7 @@ turing::turing(std::string alphabet, std::string extrasymbols) {
     rsymbols.clear();
 
     table_layout = new QVBoxLayout;
-    this->setFixedSize(700, 500);
+    this->setFixedSize(700, 545);
     header = new int;
     vector_header = new int;
     *header = -1;
@@ -64,6 +64,25 @@ turing::turing(std::string alphabet, std::string extrasymbols) {
     //ribbon[3].setStyleSheet("QLineEdit { border: 2px solid #00EEAA }");
     main_layout->addLayout(ribbon_layout);
 
+    QHBoxLayout* arrow_layout = new QHBoxLayout;
+    arrow_layout->setSpacing(0);
+    arrow_layout->setContentsMargins(0, 0, 0, 0);
+    for (int i = 0; i < 17; ++i) {
+        arrowCells[i] = new QLabel;
+        arrowCells[i]->setFixedHeight(18);
+        arrow_layout->addWidget(arrowCells[i]);
+    }
+    main_layout->addLayout(arrow_layout);
+
+    arrowFloat = new QLabel("↑", this);
+    arrowFloat->setAlignment(Qt::AlignCenter);
+    arrowFloat->setStyleSheet("color: #00EEAA; font-size: 14px; font-weight: bold;");
+    arrowFloat->setAttribute(Qt::WA_TransparentForMouseEvents);
+    arrowFloat->hide();
+
+    arrowAnim = new QPropertyAnimation(arrowFloat, "geometry", this);
+    arrowAnim->setDuration(100);
+    arrowAnim->setEasingCurve(QEasingCurve::OutCubic);
 
     int x = 0;
     for (unsigned i = 0; i < alphabet.size(); ++i) {
@@ -154,6 +173,12 @@ turing::turing(std::string alphabet, std::string extrasymbols) {
     main_layout->addWidget(changeAlphabet);
     connect(changeAlphabet, &QPushButton::clicked, this, &turing::change_alphabet);
 
+    statusLabel = new QLabel;
+    statusLabel->setStyleSheet("color: red; font-size: 11px;");
+    statusLabel->setWordWrap(true);
+    statusLabel->setFixedHeight(20);
+    main_layout->addWidget(statusLabel);
+
     setLayout(main_layout);
     connect(set_str, &QPushButton::clicked, this, &turing::setNewStr);
 }
@@ -192,7 +217,91 @@ void turing::freezeTable(bool freeze) {
     }*/
 }
 
+void turing::showEvent(QShowEvent* event) {
+    QWidget::showEvent(event);
+    if (*header != -1) {
+        moveArrowTo(*header, false);
+        arrowFloat->show();
+    }
+}
+
+void turing::moveArrowTo(int cellIndex, bool animate) {
+    QPoint cellPos = arrowCells[cellIndex]->mapTo(this, QPoint(0, 0));
+    QRect target(cellPos.x(), cellPos.y() - 8, arrowCells[cellIndex]->width(), arrowCells[cellIndex]->height());
+    if (animate) {
+        arrowAnim->stop();
+        arrowAnim->setStartValue(arrowFloat->geometry());
+        arrowAnim->setEndValue(target);
+        arrowAnim->start();
+    } else {
+        arrowFloat->setGeometry(target);
+    }
+    arrowFloat->raise();
+}
+
+bool turing::validateCommand(const QString& cmd) {
+    QString trimmed = cmd.trimmed();
+    if (trimmed.isEmpty()) return true;
+
+    std::string s = trimmed.toStdString();
+    std::stringstream ss(s);
+    std::string token;
+    if (!(ss >> token)) return true;
+
+    // optional symbol: single char not being < > !
+    if (token.size() == 1 && token != "<" && token != ">" && token != "!") {
+        if (rsymbols.find(token[0]) == rsymbols.end()) return false;
+        if (!(ss >> token)) return true;
+    }
+
+    // optional direction
+    if (token == "<" || token == ">") {
+        if (!(ss >> token)) return true;
+    }
+
+    // optional state or stop
+    if (token == "!") return true;
+    if (token.size() >= 2 && token[0] == 'q') {
+        try {
+            int q = std::stoi(token.substr(1));
+            return q >= 0 && q < lines->size();
+        } catch (...) {
+            return false;
+        }
+    }
+
+    return false;
+}
+
+bool turing::validateAll() {
+    bool ok = true;
+    int rowSize = *al_size + 1;
+    for (int i = 0; i < table->size(); ++i) {
+        if (i % rowSize == 0) continue;
+        QLineEdit* cell = table->at(i);
+        if (!validateCommand(cell->text())) {
+            cell->setStyleSheet("QLineEdit { border: 2px solid red; background: #ffe0e0; }");
+            ok = false;
+        } else {
+            cell->setStyleSheet("");
+        }
+    }
+    statusLabel->setText(ok ? "" : "Ошибка: некорректные команды выделены красным");
+    return ok;
+}
+
 void turing::setNewStr() {
+    QString inputStr = str->text();
+    for (QChar c : inputStr) {
+        if (rsymbols.find(c.toLatin1()) == rsymbols.end()) {
+            str->setStyleSheet("QLineEdit { border: 2px solid red; }");
+            statusLabel->setText(QString("Ошибка: символ '") + c + "' не входит в алфавит");
+            return;
+        }
+    }
+    str->setStyleSheet("");
+    statusLabel->setText("");
+
     freezeTable(false);
     for (int i = 0; i < 17; i++) {
         ribbon[i].setText("^");
@@ -221,7 +330,8 @@ void turing::setNewStr() {
     *q_header = 0;
     table->at(0)->setStyleSheet("QLineEdit { border: 2px solid #0000AA }");
     *vector_header = 8 + 128;
-    ribbon[8].setStyleSheet("QLineEdit { border: 2px solid #00EEAA }");
+    arrowFloat->show();
+    moveArrowTo(8, false);
     *stopped = 0;
 }
 
@@ -283,6 +393,7 @@ void turing::step() {
     if (*stopped) { qDebug() << "machine stopped"; return; }
     static bool firstStep = true;
     if (firstStep) {
+        if (!validateAll()) return;
         freezeTable(true);
         firstStep = false;
     }
@@ -317,8 +428,8 @@ void turing::step() {
     }
 
 
+    int oldHeader = *header;
     if (dir == ">") {
-        ribbon[*header].setStyleSheet("");
         *header += 1;
         *vector_header += 1;
         if (*header >= 17) {
@@ -332,9 +443,8 @@ void turing::step() {
                 ++j;
             }
         }
-        ribbon[*header].setStyleSheet("QLineEdit { border: 2px solid #00EEAA }");
+        moveArrowTo(*header, qAbs(*header - oldHeader) <= 1);
     } else if(dir =="<") {
-        ribbon[*header].setStyleSheet("");
         *header -= 1;
         *vector_header -= 1;
         if (*header < 0) {
@@ -348,7 +458,7 @@ void turing::step() {
                 ++j;
             }
         }
-        ribbon[*header].setStyleSheet("QLineEdit { border: 2px solid #00EEAA }");
+        moveArrowTo(*header, qAbs(*header - oldHeader) <= 1);
     }
 
     if (new_q == "!") {
@@ -378,6 +488,7 @@ void turing::play() {
         qDebug() << "Машина уже остановлена";
         return;
     }
+    if (!validateAll()) return;
     if (timer->isActive()) {
         timer->stop();
     }

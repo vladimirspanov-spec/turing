@@ -3,6 +3,8 @@
 
 #include <QWidget>
 #include <QLineEdit>
+#include <QLabel>
+#include <QPropertyAnimation>
 #include <string>
 #include <QVBoxLayout>
 #include <QVector>
@@ -39,6 +41,10 @@ private slots:
     void change_alphabet();
 private:
     void freezeTable(bool freeze);
+    void moveArrowTo(int cellIndex, bool animate = true);
+    void showEvent(QShowEvent* event) override;
+    bool validateCommand(const QString& cmd);
+    bool validateAll();
     QLineEdit *Alphabet;
     QLineEdit *ExtraSymbols;
     QLineEdit *ribbon;
@@ -60,6 +66,10 @@ private:
     QPushButton *changeAlphabet;
     QPushButton *removeSpeed;
     QPushButton *addSpeed;
+    QLabel* arrowCells[17];
+    QLabel* arrowFloat;
+    QPropertyAnimation* arrowAnim;
+    QLabel* statusLabel;
 
 };
 

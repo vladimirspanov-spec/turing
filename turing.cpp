@@ -8,15 +8,10 @@
 #include <sstream>
 #include "mainwindow.h"
 
-QVBoxLayout *table_layout = nullptr;
 std::map<int, char> symbols;
 std::map<char, int> rsymbols;
 
 turing::turing(std::string alphabet, std::string extrasymbols) {
-    if (table_layout) {
-        delete table_layout;
-        table_layout = nullptr;
-    }
     symbols.clear();
     rsymbols.clear();
 

@@ -5,8 +5,8 @@
 #include <QLineEdit>
 #include <QLabel>
 #include <QPropertyAnimation>
-#include <string>
 #include <QVBoxLayout>
+#include <string>
 #include <QVector>
 #include <QTimer>
 #include <QPushButton>
@@ -66,6 +66,7 @@ private:
     QPushButton *changeAlphabet;
     QPushButton *removeSpeed;
     QPushButton *addSpeed;
+    QVBoxLayout *table_layout;
     QLabel* arrowCells[17];
     QLabel* arrowFloat;
     QPropertyAnimation* arrowAnim;

@@ -2,6 +2,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QPushButton>
+#include <QScrollArea>
 #include <QDebug>
 #include <QString>
 #include <map>
@@ -139,7 +140,13 @@ turing::turing(std::string alphabet, std::string extrasymbols) {
     add_q_layout->addWidget(plusq); add_q_layout->addWidget(minusq);
 
 
-    main_layout->addLayout(table_layout);
+    QWidget* tableContainer = new QWidget;
+    tableContainer->setLayout(table_layout);
+    QScrollArea* tableScroll = new QScrollArea;
+    tableScroll->setWidget(tableContainer);
+    tableScroll->setWidgetResizable(true);
+    tableScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    main_layout->addWidget(tableScroll);
     main_layout->addLayout(add_q_layout);
 
 
